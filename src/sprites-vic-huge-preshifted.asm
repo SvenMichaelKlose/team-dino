@@ -8,7 +8,7 @@
 ; d: Destination address
 ;
 ; X remains untouched.
-.proc preshift_huge_sprite_one_offset:
+.proc preshift_huge_sprite_one_offset
     ; Configure the blitter.
     sta blit_left_addr + 1
     tay

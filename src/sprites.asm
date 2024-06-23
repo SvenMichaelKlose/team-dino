@@ -1,17 +1,20 @@
-init_sprites:
+    .code
+
+.proc init_sprites
     lda #0
-    sta (@(+ free_sprites num_sprites)),y
+    sta (free_sprites + num_sprites),y
     ldy #num_sprites
     ldx #is_inactive
 l:  tya
     dey
     sta free_sprites,y
     stx sprites_i,y
-    bne -l
+    bne l
     rts
+.endproc
 
 ; X: sprite index
-remove_sprite:
+.proc remove_sprite
     lda #is_inactive
     sta sprites_i,x
     inx
@@ -21,10 +24,11 @@ remove_sprite:
     stx free_sprites
     dex
     rts
+.endproc
 
 ; Y: descriptor of new sprite in sprite_inits
 ; Returns: A: Index of new sprite.
-add_sprite:
+.proc add_sprite
     stx tmp
     sty tmp2
 
@@ -59,30 +63,32 @@ n:  lda dl
     clc
     adc #num_sprites
     sta dl
-    cmp #@(+ sprites_pgh num_sprites)
+    cmp #sprites_pgh + num_sprites
     bcs sprite_added
-    bcc -l      ; (jmp)
+    bcc l   ; (jmp)
 
 sprite_added:
     txa
 r:  ldx tmp
     ldy tmp2
     rts
+.endproc
 
-remove_sprites_by_type:
+.proc remove_sprites_by_type
     sta tmp
     txa
     pha
-    ldx #@(-- num_sprites)
+    ldx #num_sprites - 1
 l:  lda sprites_i,x
     and tmp
-    beq +n
+    beq n
     jsr remove_sprite
 n:  dex
-    bpl -l
+    bpl l
     pla
     tax
     rts
+.endproc
 
 ; Move sprite X up A pixels.
 sprite_up:
@@ -114,7 +120,7 @@ sprite_right:
 ; Returns:
 ; C: Clear when a hit was found.
 ; Y: Sprite index of other sprite.
-find_hit:
+.proc find_hit
     sta tmp4
     stx tmp
 
@@ -133,7 +139,7 @@ find_hit:
     adc sprites_y,x
     sta tmp3
  
-    ldy #@(-- num_sprites)
+    ldy #num_sprites - 1
 
 l:  cpy tmp    ; Skip same sprite.
     beq +n
@@ -169,15 +175,16 @@ l:  cpy tmp    ; Skip same sprite.
     clc
     adc sprites_x,y
     cmp sprites_x,x
-    bcc +n
+    bcc n
 
     clc
     rts
 
 n:  dey
-    bpl -l
+    bpl l
     sec
     rts
+.endproc
 
 ; Find point collision with sprite.
 ;
@@ -187,7 +194,7 @@ n:  dey
 ; Returns:
 ; C: Clear when a hit was found.
 ; Y: Sprite index of sprite hit.
-find_point_hit:
+.proc find_point_hit
     sta tmp4
 
     ; Get opposite corner's coordinates of sprite.
@@ -206,18 +213,18 @@ find_point_hit:
     adc sprites_y,x
     sta tmp3
 
-    ldy #@(-- num_sprites)
+    ldy #num_sprites - 1
 l:  lda sprites_i,y
     and tmp4
-    beq +n
+    beq n
 
     lda ball_x
     cmp sprites_x,y
-    bcc +n
+    bcc n
 
     lda ball_y
     cmp sprites_y,y
-    bcc +n
+    bcc n
 
     lda sprites_dimensions,y
     and #%111
@@ -229,7 +236,7 @@ l:  lda sprites_i,y
     clc
     adc sprites_x,y
     cmp ball_x
-    bcc +n
+    bcc n
 
     lda sprites_dimensions,y
     and #%111000
@@ -238,27 +245,29 @@ l:  lda sprites_i,y
     sec
     sbc #1
     cmp ball_y
-    bcc +n
+    bcc n
     clc
     rts
 
 n:  dey
-    bpl -l
+    bpl l
     sec
     rts
+.endproc
 
-call_sprite_controllers:
-    ldx #@(-- num_sprites)
+.proc call_sprite_controllers
+    ldx #num_sprites - 1
 l1: lda sprites_i,x
-    bmi +n1             ; Slot unused…
+    bmi n1              ; Slot unused…
     lda sprites_fl,x
     sta dl
     lda sprites_fh,x
     sta dh
     stx call_controllers_x
-m1: jsr +j
+m1: jsr j
     ldx call_controllers_x
 n1: dex
-    bpl -l1
+    bpl l1
     rts
 j:  jmp (d)
+.endproc

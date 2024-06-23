@@ -1,7 +1,6 @@
 sprites_nchars:    @(gen-sprite-nchars)
 
-; Draw sprite, masking out the background
-draw_huge_sprite:
+.proc draw_huge_sprite
 
     ;;;;;;;;;;;;;;;;;
     ;;; Configure ;;;
@@ -40,9 +39,9 @@ n:  lda sprites_x,x
     sta sprite_cols_on_screen
     lda sprite_x
     and #%111
-    beq +n
+    beq :+
     inc sprite_cols_on_screen     ; One more due to shift.
-n:
+:
 
     ;; Get height.
     lda sprites_dimensions,x
@@ -61,13 +60,13 @@ n:
 
     lda sprite_y
     and #%111
-    beq +n
+    beq :+
     inc sprite_rows_on_screen     ; One more due to shift.
     lda sprite_lines_on_screen
     clc
     adc #8
     sta sprite_lines_on_screen
-n:
+:
 
     ;; Save dimensions for clean-up.
     lda sprite_cols_on_screen
@@ -85,10 +84,10 @@ n:
     ldy next_sprite_char
     sty sprite_char
     lda charset_addrs_l,y
-    sta d
+    sta dl
     sta tmp4
     lda charset_addrs_h,y
-    sta @(++ d)
+    sta dh
     sta tmp5
 
     ;; Allocate chars.
@@ -102,10 +101,6 @@ n:
     clc
     adc next_sprite_char
     sta next_sprite_char
-
-if @*show-cpu?*
-    inc $900f
-end
 
 ; #########################################################
 
@@ -129,9 +124,9 @@ init_next_char:
     ; Get screen address.
     ldy scry
     lda line_addresses_l,y
-    sta scr
+    sta scrl
     lda line_addresses_h,y
-    sta @(++ scr)
+    sta scrh
 
     ldy scrx
     lda (scr),y
@@ -153,9 +148,9 @@ init_next_char:
     ; DOH char to mix into?
     lda is_doh_level
     beq init_clear
-    lda scr
+    lda scrl
     sta sl
-    lda @(++ scr)
+    lda scrh
     ora bricks
     sta sh
     ldy scrx
@@ -229,9 +224,9 @@ init_done_char:
     clc
     adc #8
     sta dl
-    bcc +n
+    bcc :+
     inc dh
-n:  dec tmp2
+:   dec tmp2
     bne j_init_next_char
 
     inc scrx
@@ -251,22 +246,18 @@ n:  dec tmp2
     adc tmp4
     sta dl
     ldy tmp5
-    bcc +n
+    bcc :+
     iny
-n:  sty dh
-
-if @*show-cpu?*
-    inc $900f
-end
+:   sty dh
 
     lda sprite_cols         ; (Loop init.)
     sta tmp2
 
     ;; Get pre-shifted data.
     lda sprites_pgh,x
-    bne +n
+    bne :+
     jmp slow_shift          ; There is none…
-n:  sta sh
+:   sta sh
     lda sprites_pgl,x
     sta sl
 
@@ -289,9 +280,9 @@ n:  sta sh
     and #%111
     beq regular_column  ; No shift. Ready to draw…
     ldy curcol
-    bpl +n
+    bpl :+
     lsr                 ; Half X resolution for multicolor.
-n:  tay
+:   tay
 
     ; Subtract column bytes from total.
     lda sl
@@ -304,9 +295,9 @@ n:  tay
 multiply_by_shifts:
     clc
     adc tmp3
-    bcc +n
+    bcc :+
     inc sh
-n:  dey
+:   dey
     bne multiply_by_shifts
     sta sl
 
@@ -365,9 +356,9 @@ regular_char:
     clc
     adc sprite_lines_on_screen
     sta dl
-    bcc +n
+    bcc :+
     inc dh
-n:
+:
 
     ;; Step to next sprite column.
     lda sl
@@ -425,9 +416,9 @@ turbo_char:
     clc
     adc sprite_lines_on_screen
     sta dl
-    bcc +n
+    bcc :+
     inc dh
-n:
+:
 
     ;; Step to next sprite column.
     lda sl
@@ -456,10 +447,10 @@ slow_shift:
     ;; Configure the blitter.
     lda sprite_x
     and #%111
-    sta @(++ blit_left_addr)
+    sta blit_left_addr + 1
     tay
     lda negate7,y
-    sta @(++ blit_right_addr)
+    sta blit_right_addr + 1
 
 slow_column:
     ;; Draw left half of sprite column.
@@ -471,17 +462,17 @@ slow_column:
     clc
     adc sprite_lines_on_screen
     sta dl
-    bcc +n
+    bcc :+
     inc dh
-n:
+:
 
     ;; Draw right half of sprite column.
     lda sprite_x
     and #%111
-    beq +n      ; We might as well not if not shifted.
+    beq :+      ; We might as well not if not shifted.
     ldy sprite_lines
     jsr _blit_left_loop
-n:
+:
 
     ;; Break here when all columns are done.
     dec tmp2
@@ -554,9 +545,6 @@ direct_char:
     ;;;;;;;;;;;;;;;;;;
 
 plot_chars:
-if @*show-cpu?*
-    inc $900f
-end
     ;; Get initial sprite char and screen position.
     lda sprite_char
     sta tmp
@@ -567,13 +555,13 @@ end
     sta scrx
     clc
     adc line_addresses_l,y
-    sta scr
-    sta col
+    sta scrl
+    sta coll
     lda line_addresses_h,y
     adc #0
-    sta @(++ scr)
+    sta scrh
     ora #>colors
-    sta @(++ col)
+    sta colh
 
     ; Reset column index.
     lda #0
@@ -601,20 +589,20 @@ plot_row:
     ; Plot over background if DOH projectile.
     lda sprites_i,x
     and #is_doh_obstacle
-    bne +n
+    bne :+
     lda (scr),y
     and #foreground
     bne dont_plot       ; Do not plot over background.
 
     ;; Plot.
     ; Do not overwrite priority chars.
-n:  lda (scr),y
+:   lda (scr),y
     eor spriteframe
-    beq +n
+    beq :+
     cmp #last_priority_char + 1
     bcc dont_plot
 
-n:  lda tmp
+:   lda tmp
     sta (scr),y
     lda curcol
     sta (col),y
@@ -633,12 +621,8 @@ dont_plot:
     dec sprite_cols_on_screen
     bne plot_column
 
-if @*show-cpu?*
-    dec $900f
-    dec $900f
-    dec $900f
-end
     rts
 
-next_line_offsets:
-    fill 128
+    .data
+
+next_line_offsets: .res 128
