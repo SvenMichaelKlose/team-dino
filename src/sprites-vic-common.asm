@@ -1,3 +1,18 @@
+.include "vic.asm"
+.include "constants.asm"
+.include "sprite.imports.asm"
+
+.importzp s, sl, sh
+.importzp d, dl, dh
+.importzp tmp, tmp2
+.importzp scr, scrl, scrh
+
+.import bricks
+.import line_addresses_l, line_addresses_h
+
+.import draw_huge_sprite
+
+; TODO: check if n5/n is correct
 draw_sprites:
     ldx #0
 :   lda sprites_i,x
@@ -45,17 +60,14 @@ l2: ldy tmp
     tay
 
 l3: lda (scr),y
-    beq n               ; Nothing to clear…
+    beq n5              ; Nothing to clear…
     and #foreground
-    bne n               ; Don't remove foreground chars…
+    bne n5              ; Don't remove foreground chars…
 
     lda (scr),y
     and #framemask
     cmp spriteframe
-    beq n               ; Char belongs to sprite in current frame…
-
-    lda is_doh_level
-    beq n2
+    beq n5              ; Char belongs to sprite in current frame…
 
     ; Make pointer into brick map.
     lda scrl
@@ -75,7 +87,7 @@ l3: lda (scr),y
 n2: lda #0
 n3: sta (scr),y
 
-n:  dey
+n5: dey
     bpl l3
 
     ; Step to next screen line.

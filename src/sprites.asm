@@ -1,3 +1,16 @@
+.include "vic.inc"
+.include "constants.inc"
+.include "sprite.imports.asm"
+
+.importzp s, sl, sh
+.importzp d, dl, dh
+.importzp c, cl, ch
+.importzp tmp, tmp2, tmp3, tmp4
+.importzp call_controllers_x
+.importzp free_sprites
+
+.import neg
+
     .code
 
 .proc init_sprites
@@ -194,6 +207,7 @@ n:  dey
 ; Returns:
 ; C: Clear when a hit was found.
 ; Y: Sprite index of sprite hit.
+.if 0
 .proc find_point_hit
     sta tmp4
 
@@ -254,6 +268,7 @@ n:  dey
     sec
     rts
 .endproc
+.endif
 
 .proc call_sprite_controllers
     ldx #num_sprites - 1

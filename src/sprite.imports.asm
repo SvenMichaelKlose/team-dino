@@ -1,0 +1,19 @@
+.import sprite_inits
+.import sprites_x
+.import sprites_y
+.import sprites_c
+.import sprites_fl
+.import sprites_fh
+.import sprites_gl
+.import sprites_gh
+.import sprites_dimensions
+.import sprites_sx
+.import sprites_sy
+.import sprites_sw
+.import sprites_sh
+.importzp sprites_pgl
+.importzp sprites_pgh
+.importzp sprites_i
+
+.importzp sprite_rows
+.importzp spriteframe

@@ -1,3 +1,14 @@
+.importzp tmp, tmp2, tmp3, tmp4
+.importzp s, sl, sh
+.importzp d, dl, dh
+.importzp sprite_lines
+.importzp sprite_cols
+
+.import add_sb, add_db
+.import _blit_left_loop, _blit_right_loop
+.import blit_left_addr, blit_right_addr
+.import negate7
+
 ; Preshift sprite graphics for a sprite.
 ;
 ; A: Number of bits to shift.

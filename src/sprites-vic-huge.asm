@@ -1,4 +1,41 @@
-sprites_nchars:    @(gen-sprite-nchars)
+.include "vic.asm"
+.include "constants.asm"
+.include "sprite.imports.asm"
+
+.importzp s, sl, sh
+.importzp d, dl, dh
+.importzp tmp, tmp2, tmp3, tmp4, tmp5
+.importzp col, coll, colh
+.importzp scr, scrx, scry, scrl, scrh
+.importzp col, coll, colh
+
+.import colors
+.import curcol
+.import playfield_yc
+.import sprite_cols, screen_rows
+.import _blit_left_loop, _blit_right_loop
+.import blit_right_addr, blit_left_addr
+.import overkill
+.import bricks
+.import line_addresses_l, line_addresses_h
+.import is_bonus
+
+.import sprites_nchars
+.import charset_addrs_h, charset_addrs_l
+.import sprite_char
+.import next_sprite_char
+.import sprite_lines_on_screen
+.import sprite_lines
+.import sprite_rows_on_screen
+.import sprite_cols_on_screen
+.import sprite_scrx, sprite_scry
+.import sprite_x, sprite_y
+
+; From the other game
+.import is_doh_obstacle
+.import is_doh_level
+
+.import negate7
 
 .proc draw_huge_sprite
 
@@ -195,9 +232,9 @@ init_copy:
     jmp init_done_char
 
 j_init_next_char:
-    bne init_next_char  ; (jmp)
+    jmp init_next_char  ; (jmp)
 j_init_next_row:
-    bne init_next_row   ; (jmp)
+    jmp init_next_row   ; (jmp)
 
 init_clear:
     lda #0
@@ -440,9 +477,9 @@ slow_shift:
     lda sprites_gh,x
     sta sh
 
-    lda sprites_i,x
-    and #is_bonus
-    bne direct_copy
+;    lda sprites_i,x
+;    and #is_bonus
+;    bne direct_copy
 
     ;; Configure the blitter.
     lda sprite_x
@@ -582,14 +619,14 @@ plot_row:
     cmp screen_rows
     bcs dont_plot       ; Don't plot over bottom…
     lda scrx
-    cmp #playfield_columns
+    cmp #screen_columns
     bcs dont_plot       ; Don't plot over right…
 
     ;; Check if on a background char.
     ; Plot over background if DOH projectile.
-    lda sprites_i,x
-    and #is_doh_obstacle
-    bne :+
+;    lda sprites_i,x
+;    and #is_doh_obstacle
+;    bne :+
     lda (scr),y
     and #foreground
     bne dont_plot       ; Do not plot over background.
@@ -622,6 +659,7 @@ dont_plot:
     bne plot_column
 
     rts
+.endproc
 
     .data
 
